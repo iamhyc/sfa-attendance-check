@@ -7,15 +7,8 @@ package Client;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import javax.swing.JOptionPane;
-import java.net.UnknownHostException;
 import com.mongodb.DBObject;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.Mongo;
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
 import java.awt.Cursor;
 //import com.mongodb.util.JSON;
 import java.awt.event.InputEvent;
@@ -28,6 +21,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.table.DefaultTableModel;
@@ -82,6 +77,8 @@ public class Main extends javax.swing.JFrame {
     
     public res reqData(req packet){
        try{
+           System.out.println(packet.type);
+           System.out.println((DBObject)packet.finder);
            output.writeObject(packet); output.flush();
            return (res)input.readObject();
        }catch(SocketException e){
@@ -130,7 +127,7 @@ public class Main extends javax.swing.JFrame {
         if (key.equals("")){
             res recData = reqData(new req("find"));
                 if(recData.flag){
-                    DBCursor cursor= (DBCursor)recData.finder;
+                    List cursor= (List)recData.finder;
                     render(cursor);
                 }
         }
@@ -138,19 +135,20 @@ public class Main extends javax.swing.JFrame {
             BasicDBObject tmp = new BasicDBObject().append("abbr", new BasicDBObject().append("$regex", key));
             res recData = reqData(new req("find", tmp));
             if(recData.flag){
-                DBCursor cursor= (DBCursor)recData.finder;
+                List cursor= (List)recData.finder;
                 render(cursor);
             }
         }
     }
 
-    private void render(DBCursor cursor){
+    private void render(List dbcursor){
         //Clear Table
+        Iterator cursor = dbcursor.iterator();
         ((DefaultTableModel)jTable1.getModel()).setRowCount(0);
-        ((DefaultTableModel)jTable1.getModel()).setRowCount(cursor.count());
+        ((DefaultTableModel)jTable1.getModel()).setRowCount(dbcursor.size());
         int i = 0;
                 while(cursor.hasNext()){
-                    DBObject tmp = cursor.next();
+                    DBObject tmp = (DBObject)cursor.next();
                     //System.out.println(tmp);
                     jTable1.getModel().setValueAt(tmp.get("name").toString(), i, 0);
                     if ((tmp.get("id").toString().equals(""))||(tmp.get("code").toString().equals(""))||(tmp.get("classno").toString().equals("")) || (tmp.get("phone").toString().equals("")))
